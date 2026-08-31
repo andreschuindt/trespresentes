@@ -5,7 +5,7 @@ module.exports = async function handler(req, res) {
     const host = req.headers.host || 'trespresentes.vercel.app';
     const sourceUrl = `https://${host}/api/og?v=20260831-01`;
     const source = await fetch(sourceUrl, {
-      headers: { 'User-Agent': 'TresPresentes-OG-Generator/1.0' }
+      headers: { 'User-Agent': 'TresPresentes-OG-Generator/1.1' }
     });
 
     if (!source.ok) {
@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     }
 
     const input = Buffer.from(await source.arrayBuffer());
-    const output = await sharp(input)
+    const output = await sharp(input, { failOn: 'none' })
       .resize(1200, 1200, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
       .jpeg({ quality: 92, mozjpeg: true })
       .toBuffer();
