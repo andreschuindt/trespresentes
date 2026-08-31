@@ -170,6 +170,31 @@
       .wrap{width:min(100% - 26px,1180px)}.site-header{padding-top:15px}.brand-copy small{display:none}.header-chip{font-size:9px;padding:7px 9px}.hero{padding:110px 0 58px}.hero h1{font-size:clamp(54px,18vw,78px)}.hero-lead{font-size:16px}.hero-actions{flex-direction:column;align-items:stretch}.btn{width:100%}.gift-orbit{min-height:440px}.hero-presentes-frame{width:100%;padding:0}.hero-presentes{border-radius:0}.section{padding:74px 0}.section-head h2{font-size:46px}.gift-one-grid{gap:22px}.ebook-panel{min-height:500px;padding:28px}.book-cover{width:220px;padding:28px 23px}.book-cover h3{font-size:36px}.ebook-note{left:18px;bottom:18px;width:170px}.form-card{padding:26px 20px;border-radius:28px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.therapy-copy h2,.community-copy h2{font-size:48px}.offer-board{grid-template-columns:1fr 1fr}.offer-box{min-height:132px;padding:17px}.offer-box strong{font-size:34px}.limited{grid-column:1/-1;display:block}.limited b{display:block;margin-bottom:6px}.community-art{min-height:460px;padding:28px}.community-token{left:28px;bottom:27px}.community-copy{padding:27px 21px;border-radius:28px}.benefits{grid-template-columns:1fr}.journey-grid{grid-template-columns:1fr}.step-card:last-child{grid-column:auto}.final{padding:78px 0 90px}.final h2{font-size:56px}.footer-inner{flex-direction:column}.sticky-mobile{display:block;position:fixed;z-index:50;left:12px;right:12px;bottom:12px}.sticky-mobile .btn{box-shadow:0 16px 36px rgba(0,0,0,.26)}footer{padding-bottom:100px}
     }
   </style>
+
+  <style id="insights-popup-styles">
+    .insights-popup{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px}
+    .insights-popup.is-open{display:flex}
+    .insights-popup__backdrop{position:absolute;inset:0;background:rgba(31,16,35,.74);backdrop-filter:blur(8px)}
+    .insights-popup__card{position:relative;z-index:1;width:min(560px,100%);max-height:min(720px,calc(100vh - 40px));overflow:auto;background:linear-gradient(180deg,#fffdf7 0%,#fff8eb 100%);border:1px solid rgba(58,31,61,.12);border-radius:30px;box-shadow:0 34px 100px rgba(20,8,24,.35);padding:34px 32px 28px;color:var(--ink)}
+    .insights-popup__close{position:absolute;top:16px;right:16px;width:40px;height:40px;border:0;border-radius:999px;background:#f3eadb;color:var(--plum);font-size:25px;line-height:1;cursor:pointer}
+    .insights-popup__eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(244,190,63,.18);color:var(--plum);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .insights-popup__eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold)}
+    .insights-popup h2{margin:18px 46px 10px 0;font:700 clamp(30px,5vw,44px)/1.03 var(--serif);letter-spacing:-.025em;color:var(--plum)}
+    .insights-popup p{margin:0 0 18px;color:var(--muted);font-size:16px}
+    .insights-popup__media{display:grid;place-items:center;min-height:150px;margin:18px 0;border:1.5px dashed rgba(58,31,61,.22);border-radius:22px;background:rgba(231,212,255,.20);color:var(--plum-3);text-align:center;padding:22px;font-weight:800}
+    .insights-popup__actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:20px}
+    .insights-popup__cta{display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 22px;border-radius:16px;background:var(--gold);color:var(--plum);text-decoration:none;font-weight:900;box-shadow:0 10px 30px rgba(244,190,63,.24)}
+    .insights-popup__later{border:0;background:transparent;color:var(--muted);font-weight:800;cursor:pointer;padding:12px}
+    .insights-popup__note{display:block;margin-top:14px;color:#928698;font-size:12px}
+    body.popup-open{overflow:hidden}
+    @media (max-width:560px){
+      .insights-popup{padding:14px}
+      .insights-popup__card{padding:28px 22px 22px;border-radius:24px}
+      .insights-popup h2{font-size:34px}
+      .insights-popup__actions{display:grid;grid-template-columns:1fr}
+      .insights-popup__cta{width:100%}
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -348,6 +373,23 @@
     </div>
   </footer>
 
+
+  <div class="insights-popup" id="insightsPopup" aria-hidden="true">
+    <div class="insights-popup__backdrop" data-popup-close></div>
+    <section class="insights-popup__card" role="dialog" aria-modal="true" aria-labelledby="insightsPopupTitle" aria-describedby="insightsPopupText">
+      <button class="insights-popup__close" type="button" aria-label="Fechar" data-popup-close>×</button>
+      <span class="insights-popup__eyebrow">Próximo passo</span>
+      <h2 id="insightsPopupTitle">Grupo de Insights Terapêuticos Inspiradores</h2>
+      <p id="insightsPopupText">Seu cadastro foi concluído. Esta é uma versão de teste da caixa que vai convidar a pessoa a continuar a jornada entrando no grupo.</p>
+      <div class="insights-popup__media">Espaço reservado para a imagem do grupo</div>
+      <div class="insights-popup__actions">
+        <a class="insights-popup__cta" href="#" id="insightsPopupCta">Quero entrar no grupo →</a>
+        <button class="insights-popup__later" type="button" data-popup-close>Agora não</button>
+      </div>
+      <small class="insights-popup__note">Imagem, texto final e link de direcionamento serão ajustados na próxima etapa.</small>
+    </section>
+  </div>
+
   <div class="sticky-mobile"><a class="btn btn-gold" href="#presente-1">Receber meus presentes →</a></div>
 
   <script>
@@ -355,6 +397,31 @@
       const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbzVVc29S_r0tQxAdJ_tw9sf8joP_ECGL3n1oSxNu6DQTw-j-5oR-mo4_uuntVF_x4F8kQ/exec";
       const form = document.getElementById('giftForm');
       const feedback = document.getElementById('formFeedback');
+      const insightsPopup = document.getElementById('insightsPopup');
+      const insightsPopupCta = document.getElementById('insightsPopupCta');
+      const openInsightsPopup = () => {
+        if (!insightsPopup) return;
+        insightsPopup.classList.add('is-open');
+        insightsPopup.setAttribute('aria-hidden','false');
+        document.body.classList.add('popup-open');
+        const closeButton = insightsPopup.querySelector('.insights-popup__close');
+        if (closeButton) setTimeout(() => closeButton.focus(), 40);
+      };
+      const closeInsightsPopup = () => {
+        if (!insightsPopup) return;
+        insightsPopup.classList.remove('is-open');
+        insightsPopup.setAttribute('aria-hidden','true');
+        document.body.classList.remove('popup-open');
+      };
+      if (insightsPopup) {
+        insightsPopup.querySelectorAll('[data-popup-close]').forEach(el => el.addEventListener('click', closeInsightsPopup));
+      }
+      if (insightsPopupCta) {
+        insightsPopupCta.addEventListener('click', (event) => event.preventDefault());
+      }
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && insightsPopup && insightsPopup.classList.contains('is-open')) closeInsightsPopup();
+      });
       document.getElementById('year').textContent = new Date().getFullYear();
 
       const qs = new URLSearchParams(location.search);
@@ -391,6 +458,7 @@
           feedback.textContent = 'Cadastro recebido com sucesso. Seus dados foram registrados para os próximos passos da campanha.';
           feedback.classList.add('show');
           window.dataLayer.push({event:'lead_success', form_name:'tres_presentes_alma_cuidada'});
+          setTimeout(openInsightsPopup, 350);
           form.reset();
         } catch (error) {
           feedback.textContent = 'Não foi possível enviar agora. Tente novamente em alguns instantes.';
