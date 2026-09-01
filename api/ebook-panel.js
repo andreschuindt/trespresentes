@@ -1,9 +1,9 @@
 const parts = [
-  require('./ebook-panel-data-00'),
-  require('./ebook-panel-data-01'),
-  require('./ebook-panel-data-02'),
-  require('./ebook-panel-data-03'),
-  require('./ebook-panel-data-04')
+  require('../data/ebook-panel-data-00'),
+  require('../data/ebook-panel-data-01'),
+  require('../data/ebook-panel-data-02'),
+  require('../data/ebook-panel-data-03'),
+  require('../data/ebook-panel-data-04')
 ];
 
 module.exports = (req, res) => {
