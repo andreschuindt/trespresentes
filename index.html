@@ -378,15 +378,20 @@
     <div class="insights-popup__backdrop" data-popup-close></div>
     <section class="insights-popup__card" role="dialog" aria-modal="true" aria-labelledby="insightsPopupTitle" aria-describedby="insightsPopupText">
       <button class="insights-popup__close" type="button" aria-label="Fechar" data-popup-close>×</button>
-      <span class="insights-popup__eyebrow">Próximo passo</span>
-      <h2 id="insightsPopupTitle">Grupo de Insights Terapêuticos Inspiradores</h2>
-      <p id="insightsPopupText">Seu cadastro foi concluído. Esta é uma versão de teste da caixa que vai convidar a pessoa a continuar a jornada entrando no grupo.</p>
-      <div class="insights-popup__media">Espaço reservado para a imagem do grupo</div>
+      <span class="insights-popup__eyebrow">Receba também pelo WhatsApp</span>
+      <h2 id="insightsPopupTitle">Quer continuar comigo pelo WhatsApp?</h2>
+      <p id="insightsPopupText">Seu cadastro foi concluído e o e-mail com os seus 3 presentes já está a caminho. Se quiser, toque no botão abaixo para abrir uma conversa comigo no WhatsApp. A mensagem já estará pronta — você só precisa enviar.</p>
+      <div class="insights-popup__media">
+        <div>
+          <strong style="display:block;font-size:18px;margin-bottom:6px;color:var(--plum)">Conversa direta, simples e gratuita</strong>
+          <span style="display:block;font-size:13px;line-height:1.55;font-weight:600;color:var(--muted)">Você inicia a conversa pelo seu próprio WhatsApp. Não há disparo automático nem cobrança de API.</span>
+        </div>
+      </div>
       <div class="insights-popup__actions">
-        <a class="insights-popup__cta" href="#" id="insightsPopupCta">Quero entrar no grupo →</a>
+        <a class="insights-popup__cta" href="#" id="insightsPopupCta" target="_blank" rel="noopener">Falar com André no WhatsApp →</a>
         <button class="insights-popup__later" type="button" data-popup-close>Agora não</button>
       </div>
-      <small class="insights-popup__note">Imagem, texto final e link de direcionamento serão ajustados na próxima etapa.</small>
+      <small class="insights-popup__note">Ao tocar no botão, o WhatsApp será aberto com uma mensagem pronta para +55 22 98105-2618.</small>
     </section>
   </div>
 
@@ -417,7 +422,10 @@
         insightsPopup.querySelectorAll('[data-popup-close]').forEach(el => el.addEventListener('click', closeInsightsPopup));
       }
       if (insightsPopupCta) {
-        insightsPopupCta.addEventListener('click', (event) => event.preventDefault());
+        insightsPopupCta.addEventListener('click', () => {
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({event:'whatsapp_click', form_name:'tres_presentes_alma_cuidada'});
+        });
       }
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && insightsPopup && insightsPopup.classList.contains('is-open')) closeInsightsPopup();
@@ -454,8 +462,28 @@
 
         try {
           const body = new FormData(form);
+          const leadName = String(body.get('nome') || '').trim();
+          const leadInterest = String(body.get('interesse') || '').trim();
+
           await fetch(FORM_ENDPOINT,{method:'POST',body,mode:'no-cors'});
-          feedback.textContent = 'Cadastro recebido com sucesso. Seus dados foram registrados para os próximos passos da campanha.';
+
+          if (insightsPopupCta) {
+            const firstName = leadName ? leadName.split(/\s+/)[0] : '';
+            let whatsappMessage = firstName
+              ? 'Olá, André! Aqui é ' + firstName + '. Acabei de me cadastrar no Três Presentes e gostaria de continuar pelo WhatsApp.'
+              : 'Olá, André! Acabei de me cadastrar no Três Presentes e gostaria de continuar pelo WhatsApp.';
+
+            if (leadInterest === 'Sim, quero solicitar uma das 10 vagas') {
+              whatsappMessage += ' Também quero solicitar uma das 10 vagas para o Encontro Terapêutico Gratuito de 40 minutos.';
+            } else {
+              whatsappMessage += ' Gostaria de receber as orientações por aqui também.';
+            }
+
+            whatsappMessage += ' Gratidão!';
+            insightsPopupCta.href = 'https://wa.me/5522981052618?text=' + encodeURIComponent(whatsappMessage);
+          }
+
+          feedback.textContent = 'Cadastro recebido com sucesso. O e-mail com seus 3 presentes está a caminho. Se quiser, você também pode continuar pelo WhatsApp.';
           feedback.classList.add('show');
           window.dataLayer.push({event:'lead_success', form_name:'tres_presentes_alma_cuidada'});
           setTimeout(openInsightsPopup, 350);
