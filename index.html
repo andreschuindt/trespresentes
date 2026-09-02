@@ -285,7 +285,7 @@
             </div>
 
             <label class="consent"><input type="checkbox" id="consentimento" name="consentimento" value="Sim" required /><span>Autorizo o uso dos meus dados para receber os presentes desta campanha e comunicações relacionadas por e-mail e WhatsApp. Posso solicitar a interrupção dessas comunicações a qualquer momento.</span></label>
-            <input type="hidden" name="origem" value="landing_tres_presentes_alma_cuidada" />
+            <input type="hidden" name="origem" value="landing_tres_presentes_inspira" />
             <input type="hidden" name="utm_source" id="utm_source" /><input type="hidden" name="utm_medium" id="utm_medium" /><input type="hidden" name="utm_campaign" id="utm_campaign" />
 
             <div class="form-actions">
@@ -442,13 +442,13 @@
       if (insightsPopupCta) {
         insightsPopupCta.addEventListener('click', () => {
           window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({event:'whatsapp_click', form_name:'tres_presentes_alma_cuidada'});
+          window.dataLayer.push({event:'whatsapp_click', form_name:'tres_presentes_inspira'});
         });
       }
       if (insightsGroupCta) {
         insightsGroupCta.addEventListener('click', () => {
           window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({event:'inspira_group_click', form_name:'tres_presentes_alma_cuidada'});
+          window.dataLayer.push({event:'inspira_group_click', form_name:'tres_presentes_inspira'});
         });
       }
       document.addEventListener('keydown', (event) => {
@@ -471,7 +471,7 @@
         }
 
         window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({event:'lead_submit', form_name:'tres_presentes_alma_cuidada'});
+        window.dataLayer.push({event:'lead_submit', form_name:'tres_presentes_inspira'});
 
         if (!FORM_ENDPOINT) {
           feedback.textContent = 'Prévia funcionando: a integração de envio será conectada ao Google Apps Script antes da publicação.';
@@ -509,7 +509,7 @@
 
           feedback.textContent = 'Cadastro recebido com sucesso. O e-mail com seus 3 presentes está a caminho. Escolha no próximo passo se deseja entrar no INSPIRA ou falar direto comigo pelo WhatsApp.';
           feedback.classList.add('show');
-          window.dataLayer.push({event:'lead_success', form_name:'tres_presentes_alma_cuidada'});
+          window.dataLayer.push({event:'lead_success', form_name:'tres_presentes_inspira'});
           setTimeout(openInsightsPopup, 350);
           form.reset();
         } catch (error) {
