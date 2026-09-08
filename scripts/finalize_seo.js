@@ -118,10 +118,19 @@ if (jsonLdCount !== 1) {
   throw new Error(`SEO finalizer: quantidade inesperada de JSON-LD: ${jsonLdCount}.`);
 }
 
+// 7) Arquivos de rastreamento finais. Este script roda por último e evita que
+// qualquer etapa anterior do build reintroduza um sitemap/robots desatualizado.
+const robotsTxt = `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}sitemap.xml\n`;
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${SITE_URL}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n  <url>\n    <loc>${SITE_URL}privacidade.html</loc>\n    <changefreq>yearly</changefreq>\n    <priority>0.3</priority>\n  </url>\n  <url>\n    <loc>${SITE_URL}termos.html</loc>\n    <changefreq>yearly</changefreq>\n    <priority>0.3</priority>\n  </url>\n</urlset>\n`;
+
 fs.writeFileSync(INDEX_PATH, html, 'utf8');
+fs.writeFileSync('robots.txt', robotsTxt, 'utf8');
+fs.writeFileSync('sitemap.xml', sitemapXml, 'utf8');
+
 console.log('[SEO] Título, descrição, Open Graph e Twitter padronizados.');
 console.log('[SEO] Indexabilidade liberada: index,follow.');
 console.log('[SEO] Canonical + hreflang pt-BR/x-default aplicados.');
 console.log('[SEO] Âncoras placeholder corrigidas para URLs rastreáveis.');
 console.log('[SEO] JSON-LD consolidado em um único bloco válido.');
+console.log('[SEO] robots.txt e sitemap.xml finais atualizados.');
 console.log('[SEO] Finalização técnica concluída para mobile e desktop.');
