@@ -62,10 +62,31 @@ async function main() {
 
   const hero = candidates[0];
   html = html.replace(hero.match[0], `data:image/webp;base64,${approvedB64}`);
+
+  // Mantém a arte em sua resolução natural máxima e sem filtros externos,
+  // para que o navegador não acrescente sombra nem amplie a imagem além de 530 px.
+  html = html.replace(
+    '.hero-presentes-frame{position:relative;z-index:2;width:min(610px,100%);padding:0;background:transparent;border:0;box-shadow:none}',
+    '.hero-presentes-frame{position:relative;z-index:2;width:min(530px,100%);padding:0;background:transparent;border:0;box-shadow:none}'
+  );
+  html = html.replace(
+    '.hero-presentes{display:block;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 24px 52px rgba(0,0,0,.16))}',
+    '.hero-presentes{display:block;width:100%;height:auto;object-fit:contain;filter:none}'
+  );
+  html = html.replace(
+    '.hero-presentes-frame{width:min(560px,100%)}',
+    '.hero-presentes-frame{width:min(530px,100%)}'
+  );
+  html = html.replace(
+    '.hero-presentes-frame{width:100%;padding:0}',
+    '.hero-presentes-frame{width:min(530px,100%);padding:0}'
+  );
+
   fs.writeFileSync(INDEX_PATH, html, 'utf8');
   fs.writeFileSync('hero-approved-final.webp', approved);
 
-  console.log(`[INSPIRA] Hero completo restaurado integralmente com a arte aprovada ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, sem recorte, recomposição ou reprocessamento.`);
+  console.log(`[INSPIRA] Hero completo restaurado integralmente com a arte aprovada ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}.`);
+  console.log('[INSPIRA] Exibição protegida contra ampliação acima de 530 px e sem filtro/sombra CSS externa.');
   console.log(`[INSPIRA] Hero anterior: ${hero.width}x${hero.height}. SHA-256 aprovado: ${EXPECTED_SHA256}.`);
 }
 
