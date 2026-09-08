@@ -30,19 +30,22 @@ function readApprovedBase64() {
   return b64;
 }
 
-function scoreBuffers(a, b) {
-  if (a.length !== b.length) return Number.POSITIVE_INFINITY;
-  let total = 0;
-  for (let i = 0; i < a.length; i++) total += Math.abs(a[i] - b[i]);
-  return total / a.length;
+function isPink(r, g, b) {
+  return r >= 195 && g >= 90 && b >= 90 && r >= g + 20 && r >= b + 15;
 }
 
-async function normalizedRaw(input) {
-  return sharp(input)
-    .resize(120, 50, { fit: 'fill' })
+async function pinkRatio(input) {
+  const { data, info } = await sharp(input)
+    .resize(100, 40, { fit: 'fill' })
     .removeAlpha()
     .raw()
-    .toBuffer();
+    .toBuffer({ resolveWithObject: true });
+
+  let pink = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    if (isPink(data[i], data[i + 1], data[i + 2])) pink++;
+  }
+  return pink / (info.width * info.height);
 }
 
 async function main() {
@@ -68,31 +71,35 @@ async function main() {
   const matches = [...html.matchAll(re)];
   if (!matches.length) throw new Error('Nenhuma imagem embutida em base64 foi encontrada no index.html.');
 
-  const referenceRaw = await normalizedRaw(approved);
   const candidates = [];
-
   for (const match of matches) {
     try {
       const input = Buffer.from(match[2], 'base64');
       const meta = await sharp(input).metadata();
       if (!meta.width || !meta.height) continue;
       const aspect = meta.width / meta.height;
-      if (meta.width < 300 || meta.height < 100 || meta.height > 800 || aspect < 2.05 || aspect > 2.90) continue;
-      const raw = await normalizedRaw(input);
-      candidates.push({ match, width: meta.width, height: meta.height, score: scoreBuffers(raw, referenceRaw) });
+      if (meta.width < 300 || meta.height < 100 || meta.height > 650 || aspect < 2.10 || aspect > 2.95) continue;
+      const pink = await pinkRatio(input);
+      candidates.push({ match, width: meta.width, height: meta.height, aspect, pink });
     } catch (_) {}
   }
 
-  if (!candidates.length) throw new Error('O card horizontal do Presente 03 não foi localizado. Nenhuma alteração foi feita.');
-  candidates.sort((a, b) => a.score - b.score);
+  if (!candidates.length) {
+    throw new Error('O card horizontal do Presente 03 não foi localizado. Nenhuma alteração foi feita.');
+  }
+
+  candidates.sort((a, b) => b.pink - a.pink);
   const chosen = candidates[0];
+  if (chosen.pink < 0.18) {
+    throw new Error(`Nenhum card rosa compatível foi encontrado. Melhor razão rosa: ${chosen.pink.toFixed(3)}.`);
+  }
 
   const replacement = `data:image/webp;base64,${approvedB64}`;
   const next = html.replace(chosen.match[0], replacement);
   if (next === html) throw new Error('A substituição integral da arte não alterou o HTML.');
 
   fs.writeFileSync(INDEX_PATH, next, 'utf8');
-  console.log(`[INSPIRA] Presente 03 substituído integralmente pela arte aprovada (${approvedMeta.width}x${approvedMeta.height}), sem overlays nem recomposição. Alvo anterior: ${chosen.width}x${chosen.height}; score ${chosen.score.toFixed(2)}.`);
+  console.log(`[INSPIRA] Presente 03 substituído integralmente pela arte aprovada ${approvedMeta.width}x${approvedMeta.height}, sem overlays, sem recomposição e sem alterar os demais elementos. Alvo anterior: ${chosen.width}x${chosen.height}; razão rosa ${chosen.pink.toFixed(3)}.`);
 }
 
 main().catch((err) => {
