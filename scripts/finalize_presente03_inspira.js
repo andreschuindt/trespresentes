@@ -3,9 +3,6 @@ const sharp = require('sharp');
 
 const INDEX_PATH = 'index.html';
 
-const BADGE_PATCH_B64 = "iVBORw0KGgoAAAANSUhEUgAAAE4AAAAQCAIAAAA3TN7NAAACZElEQVR42mP8vWEFw8gATAwjBox6dTgCFvK03X/+MqmzP8bVyclIP6mzn5+be0V9OQcbW2h9m4q0VHtaAgMDw4xN23acPPv1xw8hXp6C0AAJIaGkzn4GBgZGRkYRfr4wR9sQexs0cxgYGJiZmCSEBNN8Pe30dSB2Vcyaf/LaTUdDvbr4qIGP1Y9fv64/fBxZ5NLd+yv3HUr389zQWhvv4fLz12+IeIyr066eFlUZ6anrtzx/+w7NnBhXp41tdb/+/Jm1eTtE5PO3b2dv3mFkZDx29fqPX78G3qty4qIr9x1Cdsr3n78YGBgevHj59cdPLwtTB0M9uNTvP38Z/v/HY9r///+F+Hgh7IMXrvz5+9fVxPDnr99HL18beK96mJmwsjBvQIpYEw1VB0O91QeOhDe0x7X1Xrn/ECK+ZPc+74r620+fZQX4SAoLoZmzZPc+n4qGH79+l4QHQ0T2nb/IxsqS6uPBxMS099zFgfcqKwtzpLPDyv2Hfv35AxFhZmKqj49a31JTHRv+/O272Zt3wJPovv72VQ2VoQ42mObEuDpNKcj6/vPnnK07GBgY3n76fOHOPX1lJRF+Pi152dM3bn3+9m3gS2AfSzNmJqZPX6FOOXvrzoIde37++q2rqMDDycnJzkakOdoKcvYGukcuX3v65u2B85f+//9/+sYtx4KKK/cf/vn79+DFK/QugTEBGytLpLPDlPWbIVw+Lq7jV6+v3n/4779/ipISab4exBvla2W+79zFzcdOXrp7n4+ba01jFSsLy49fv4LrWveeveBjaUaeCxlHG4ajXh316qhXBxcAACRIAB/rJpdjAAAAAElFTkSuQmCC";
-const BODY_PATCH_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEcAAAANCAIAAAB0EeRCAAACHUlEQVR42mP8tXw+w7ADTAzDEQxrX73+/Dl30QoIw7Gt7/DN2wwMDH///YubOf/vv3+dW3Z6905JnL3wwsPHcDWObX2BE6avOXUOrh0uHjBh+ooTp+F29G7bnb9k1QDHlYyQ4PLjZ/7DuMdu33356fOyzOTmYL9jd+5BBHVkpPZXFU2Jj1x89MT3X7/heiHi0xOilh8//e3XLwYGhj9//557+PjHr9+vPn0eSF8J83BrSIkfvXUHwuVkY+Pn5ODj4pQREsxytkfRzMjIwMDAyIhuAiMjIyszM0T2+J372tKSNuoqe65ep5uvWLCKRlma1a/bbKmixMDAYKIo//rzl/ZN2xkZGF10NEyVFBgYGK48eebY1sfPxRltZc7Byvr5xw+IRog4AwNDkacLBysrAwPDnqvXHTXV5YQFWzZuj7I0G0hfifDyqEqIHbt9F8L11NP21NP+9edP5oJlyuKikJQ2OS4CU6OOjNSk2PDjd+4vPnLCx1Dv28+fZ+4/LPdx52Jj+/H7991Xr5XFRAfMV9DoWruZgYHh0I3bH79/d9RUf//128dv33/8+s3KwozHREZGRitVpX3Xbpy4c+/912/ffv7y7pkCkdpz5bqy04D6SoyPV01S7PzDx6ZKCjP2HZy1/zArM3OAsYGUoMDrz4TzfYSF6aRd+1iYmFpDA6xUlRgYGB6+eVe5an2aoy0jZkakNmAcbVuM+mpAAQDCrt7hgTpj3AAAAABJRU5ErkJggg==";
-
 function isPink(r, g, b) {
   return r >= 205 && g >= 105 && b >= 105 && r >= g + 25 && r >= b + 20;
 }
@@ -23,26 +20,83 @@ async function pinkRatio(input) {
   return pink / (info.width * info.height);
 }
 
-async function makePatch(b64, width, height) {
-  return sharp(Buffer.from(b64, 'base64'))
-    .resize(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)), {
-      fit: 'fill',
-      kernel: sharp.kernel.lanczos3
+async function sampleColor(input, left, top, width, height) {
+  const { data } = await sharp(input)
+    .extract({
+      left: Math.max(0, left),
+      top: Math.max(0, top),
+      width: Math.max(1, width),
+      height: Math.max(1, height)
     })
-    .png()
-    .toBuffer();
+    .resize(1, 1)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return `rgb(${data[0] || 247},${data[1] || 170},${data[2] || 165})`;
+}
+
+function makeSvgPatch(width, height, bg, text, fontSize, weight = 700, textColor = '#7b1616') {
+  const rx = Math.max(2, Math.round(height * 0.28));
+  return Buffer.from(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <rect x="0" y="0" width="${width}" height="${height}" rx="${rx}" fill="${bg}"/>
+    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
+      font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="${weight}" fill="${textColor}">${text}</text>
+  </svg>`);
 }
 
 async function patchIsolated(input, width, height) {
   const sx = width / 500;
   const sy = height / 200;
-  const badge = await makePatch(BADGE_PATCH_B64, 78 * sx, 16 * sy);
-  const body = await makePatch(BODY_PATCH_B64, 71 * sx, 13 * sy);
+
+  const badgeBox = {
+    left: Math.round(325 * sx),
+    top: Math.round(24 * sy),
+    width: Math.round(92 * sx),
+    height: Math.round(23 * sy)
+  };
+  const bodyBox = {
+    left: Math.round(226 * sx),
+    top: Math.round(127 * sy),
+    width: Math.round(91 * sx),
+    height: Math.round(17 * sy)
+  };
+
+  const badgeBg = await sampleColor(input,
+    badgeBox.left + Math.round(8 * sx),
+    badgeBox.top + Math.round(5 * sy),
+    Math.max(1, Math.round(4 * sx)),
+    Math.max(1, Math.round(4 * sy))
+  );
+  const bodyBg = await sampleColor(input,
+    bodyBox.left,
+    bodyBox.top,
+    Math.max(1, Math.round(4 * sx)),
+    Math.max(1, Math.round(4 * sy))
+  );
+
+  const badgePatch = makeSvgPatch(
+    badgeBox.width,
+    badgeBox.height,
+    badgeBg,
+    'PROJETO INSPIRA',
+    Math.max(8, Math.round(7.4 * sy)),
+    700
+  );
+  const bodyPatch = makeSvgPatch(
+    bodyBox.width,
+    bodyBox.height,
+    bodyBg,
+    'INSPIRA',
+    Math.max(8, Math.round(8.2 * sy)),
+    500,
+    '#1a1a1a'
+  );
 
   return sharp(input)
     .composite([
-      { input: badge, left: Math.round(332 * sx), top: Math.round(28 * sy) },
-      { input: body, left: Math.round(230 * sx), top: Math.round(132 * sy) }
+      { input: badgePatch, left: badgeBox.left, top: badgeBox.top },
+      { input: bodyPatch, left: bodyBox.left, top: bodyBox.top }
     ])
     .webp({ lossless: true, effort: 6 })
     .toBuffer();
@@ -84,7 +138,6 @@ async function findBottomPinkCard(input, width, height) {
   if (!xs.length) return null;
 
   let x0 = xs[0], x1 = xs[xs.length - 1];
-
   const denseThreshold = Math.floor(cardH * 0.60);
   const dense = [];
   for (let x = x0; x <= x1; x++) if (colCounts[x] >= denseThreshold) dense.push(x);
@@ -98,7 +151,6 @@ async function findBottomPinkCard(input, width, height) {
 
 async function patchFullStack(input, width, height) {
   let box = await findBottomPinkCard(input, width, height);
-
   if (!box || box.w < width * 0.45 || box.h < height * 0.12) {
     box = {
       x: Math.round(width * 0.108),
@@ -111,23 +163,59 @@ async function patchFullStack(input, width, height) {
   const sx = box.w / 77;
   const sy = box.h / 31;
 
-  const badgeLeft = Math.round(box.x + (66.4 - 11) * sx);
-  const badgeTop  = Math.round(box.y + (5.6 - 2) * sy);
-  const bodyLeft  = Math.round(box.x + (46.0 - 11) * sx);
-  const bodyTop   = Math.round(box.y + (26.4 - 2) * sy);
+  const badgeBox = {
+    left: Math.round(box.x + 53.8 * sx),
+    top: Math.round(box.y + 3.1 * sy),
+    width: Math.round(17.2 * sx),
+    height: Math.round(4.2 * sy)
+  };
+  const bodyBox = {
+    left: Math.round(box.x + 34.7 * sx),
+    top: Math.round(box.y + 23.6 * sy),
+    width: Math.round(16.8 * sx),
+    height: Math.round(3.2 * sy)
+  };
 
-  const badge = await makePatch(BADGE_PATCH_B64, 15.6 * sx, 3.2 * sy);
-  const body = await makePatch(BODY_PATCH_B64, 14.2 * sx, 2.6 * sy);
+  const badgeBg = await sampleColor(input,
+    badgeBox.left + Math.max(1, Math.round(2 * sx)),
+    badgeBox.top + Math.max(1, Math.round(1 * sy)),
+    Math.max(1, Math.round(1 * sx)),
+    Math.max(1, Math.round(1 * sy))
+  );
+  const bodyBg = await sampleColor(input,
+    bodyBox.left,
+    bodyBox.top,
+    Math.max(1, Math.round(1 * sx)),
+    Math.max(1, Math.round(1 * sy))
+  );
+
+  const badgePatch = makeSvgPatch(
+    badgeBox.width,
+    badgeBox.height,
+    badgeBg,
+    'PROJETO INSPIRA',
+    Math.max(8, Math.round(0.75 * sy)),
+    700
+  );
+  const bodyPatch = makeSvgPatch(
+    bodyBox.width,
+    bodyBox.height,
+    bodyBg,
+    'INSPIRA',
+    Math.max(8, Math.round(0.82 * sy)),
+    500,
+    '#1a1a1a'
+  );
 
   const output = await sharp(input)
     .composite([
-      { input: badge, left: badgeLeft, top: badgeTop },
-      { input: body, left: bodyLeft, top: bodyTop }
+      { input: badgePatch, left: badgeBox.left, top: badgeBox.top },
+      { input: bodyPatch, left: bodyBox.left, top: bodyBox.top }
     ])
     .webp({ lossless: true, effort: 6 })
     .toBuffer();
 
-  console.log(`[INSPIRA] Hero 1122x1402: card detectado em x=${box.x}, y=${box.y}, w=${box.w}, h=${box.h}.`);
+  console.log(`[INSPIRA] Hero 1122x1402 corrigido em x=${box.x}, y=${box.y}, w=${box.w}, h=${box.h}.`);
   return output;
 }
 
@@ -157,23 +245,22 @@ async function main() {
     }
   }
   wide.sort((a, b) => b.pink - a.pink);
+
   if (wide.length && wide[0].pink > 0.22) {
     const item = wide[0];
     const output = await patchIsolated(item.input, item.width, item.height);
-    const uri = `data:image/webp;base64,${output.toString('base64')}`;
-    html = html.replace(item.match[0], uri);
-    console.log(`[INSPIRA] Card isolado corrigido sem perda: ${item.width}x${item.height}, pink=${item.pink.toFixed(3)}.`);
+    html = html.replace(item.match[0], `data:image/webp;base64,${output.toString('base64')}`);
+    console.log(`[INSPIRA] Card isolado corrigido e preservado nítido: ${item.width}x${item.height}.`);
   }
 
   const stack = infos.find(item => item.width === 1122 && item.height === 1402);
   if (stack) {
     const output = await patchFullStack(stack.input, stack.width, stack.height);
-    const uri = `data:image/webp;base64,${output.toString('base64')}`;
-    html = html.replace(stack.match[0], uri);
+    html = html.replace(stack.match[0], `data:image/webp;base64,${output.toString('base64')}`);
   }
 
   fs.writeFileSync(INDEX_PATH, html, 'utf8');
-  console.log('[INSPIRA] Correção final aplicada: ALMA CUIDADA -> INSPIRA, sem recompressão com perda.');
+  console.log('[INSPIRA] Correção concluída: PROJETO INSPIRA + Comunidade INSPIRA, sem recompressão com perda.');
 }
 
 main().catch((err) => {
