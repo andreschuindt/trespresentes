@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const sharp = require('sharp');
 
 const INDEX_PATH = 'index.html';
+const REVIEW_BEFORE = 'presente03-review-before.webp';
+const REVIEW_FINAL = 'presente03-review-final.webp';
 const PARTS = Array.from({ length: 14 }, (_, i) =>
   `assets/presente03-approved/part${String(i + 1).padStart(2, '0')}.b64`
 );
@@ -34,11 +36,11 @@ async function pinkRatio(input) {
   return pink / (info.width * info.height);
 }
 
-async function findBottomPinkCard(input, width, height) {
+async function findPinkBounds(input, width, height, startFraction = 0) {
   const { data, info } = await sharp(input).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const channels = info.channels;
+  const startY = Math.floor(height * startFraction);
   const rowCounts = new Int32Array(height);
-  const startY = Math.floor(height * 0.52);
 
   for (let y = startY; y < height; y++) {
     let count = 0;
@@ -54,8 +56,10 @@ async function findBottomPinkCard(input, width, height) {
   for (let y = startY; y < height; y++) if (rowCounts[y] >= rowThreshold) ys.push(y);
   if (!ys.length) return null;
 
-  let y0 = ys[0], y1 = ys[ys.length - 1];
+  const y0 = ys[0];
+  const y1 = ys[ys.length - 1];
   const colCounts = new Int32Array(width);
+
   for (let y = y0; y <= y1; y++) {
     let p = y * width * channels;
     for (let x = 0; x < width; x++, p += channels) {
@@ -69,32 +73,80 @@ async function findBottomPinkCard(input, width, height) {
   for (let x = 0; x < width; x++) if (colCounts[x] >= colThreshold) xs.push(x);
   if (!xs.length) return null;
 
-  let x0 = xs[0], x1 = xs[xs.length - 1];
-  return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  return { x: xs[0], y: y0, w: xs[xs.length - 1] - xs[0] + 1, h: cardH };
 }
 
-async function replaceInsideStack(input, width, height, approved) {
-  let box = await findBottomPinkCard(input, width, height);
-  if (!box || box.w < width * 0.42 || box.h < height * 0.10) {
-    box = {
-      x: Math.round(width * 0.108),
-      y: Math.round(height * 0.675),
-      w: Math.round(width * 0.752),
-      h: Math.round(height * 0.250)
+function removeImgTagContaining(html, dataUri) {
+  const at = html.indexOf(dataUri);
+  if (at < 0) return { html, removed: false };
+
+  const start = html.lastIndexOf('<img', at);
+  const end = html.indexOf('>', at);
+  if (start >= 0 && end > at) {
+    const tag = html.slice(start, end + 1);
+    if (tag.includes(dataUri)) {
+      return { html: html.slice(0, start) + html.slice(end + 1), removed: true };
+    }
+  }
+
+  return { html, removed: false };
+}
+
+async function buildReplacementStrip(hero, heroW, heroH, approved, approvedMeta) {
+  let heroCard = await findPinkBounds(hero, heroW, heroH, 0.52);
+  if (!heroCard) {
+    heroCard = {
+      x: Math.round(heroW * 0.11),
+      y: Math.round(heroH * 0.655),
+      w: Math.round(heroW * 0.79),
+      h: Math.round(heroH * 0.27)
     };
   }
 
-  const card = await sharp(approved)
-    .resize(box.w, box.h, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
-    .toBuffer();
+  let approvedCard = await findPinkBounds(approved, approvedMeta.width, approvedMeta.height, 0);
+  if (!approvedCard) {
+    approvedCard = { x: 70, y: 24, w: 660, h: 278 };
+  }
 
-  const out = await sharp(input)
-    .composite([{ input: card, left: box.x, top: box.y }])
+  const scaledApproved = await sharp(approved)
+    .resize({ width: heroW, withoutEnlargement: false, kernel: sharp.kernel.lanczos3 })
     .webp({ lossless: true, effort: 6 })
     .toBuffer();
+  const scaledMeta = await sharp(scaledApproved).metadata();
 
-  console.log(`[INSPIRA] Arte aprovada aplicada integralmente no Presente 03 dentro do hero: x=${box.x}, y=${box.y}, w=${box.w}, h=${box.h}.`);
-  return out;
+  const scale = heroW / approvedMeta.width;
+  const approvedPinkTopScaled = Math.round(approvedCard.y * scale);
+  let top = heroCard.y - approvedPinkTopScaled;
+
+  // Protege os blocos 01 e 02 e garante cobertura integral de todo o bloco 03.
+  const minTop = Math.round(heroH * 0.60);
+  const maxTop = Math.round(heroH * 0.70);
+  top = Math.max(minTop, Math.min(maxTop, top));
+
+  const stripH = heroH - top;
+  const base = await sharp({
+    create: {
+      width: heroW,
+      height: stripH,
+      channels: 3,
+      background: { r: 50, g: 24, b: 54 }
+    }
+  }).webp({ lossless: true }).toBuffer();
+
+  const composites = [{ input: scaledApproved, left: 0, top: 0 }];
+
+  if (scaledMeta.height < stripH) {
+    const extra = stripH - scaledMeta.height;
+    const sampleH = Math.min(24, scaledMeta.height);
+    const tail = await sharp(scaledApproved)
+      .extract({ left: 0, top: scaledMeta.height - sampleH, width: heroW, height: sampleH })
+      .resize(heroW, extra, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
+      .toBuffer();
+    composites.push({ input: tail, left: 0, top: scaledMeta.height });
+  }
+
+  const strip = await sharp(base).composite(composites).webp({ lossless: true, effort: 6 }).toBuffer();
+  return { strip, top, heroCard, approvedCard, scaledHeight: scaledMeta.height };
 }
 
 async function main() {
@@ -125,6 +177,19 @@ async function main() {
     } catch (_) {}
   }
 
+  const tallCandidates = infos.filter((item) => {
+    const aspect = item.width / item.height;
+    return item.width >= 700 && item.height >= 900 && aspect >= 0.55 && aspect <= 1.05;
+  });
+
+  if (!tallCandidates.length) {
+    throw new Error('Hero vertical com os três presentes não localizado. Nenhuma alteração foi feita.');
+  }
+
+  tallCandidates.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+  const stack = tallCandidates[0];
+
+  // Identifica a imagem horizontal rosa que vinha sendo colocada por cima do hero.
   const wide = [];
   for (const item of infos) {
     const aspect = item.width / item.height;
@@ -134,32 +199,33 @@ async function main() {
   }
   wide.sort((a, b) => b.pink - a.pink);
 
+  let overlayRemoved = false;
   if (wide.length && wide[0].pink >= 0.16) {
-    const item = wide[0];
-    html = html.replace(item.match[0], `data:image/webp;base64,${approvedB64}`);
-    fs.writeFileSync(INDEX_PATH, html, 'utf8');
-    console.log(`[INSPIRA] Card isolado do Presente 03 substituído integralmente pela arte aprovada. Alvo: ${item.width}x${item.height}; rosa ${item.pink.toFixed(3)}.`);
-    return;
+    const result = removeImgTagContaining(html, wide[0].match[0]);
+    html = result.html;
+    overlayRemoved = result.removed;
+    console.log(`[INSPIRA] Overlay horizontal detectado: ${wide[0].width}x${wide[0].height}, rosa ${wide[0].pink.toFixed(3)}. Tag removida: ${overlayRemoved}.`);
   }
 
-  const tallCandidates = infos.filter((item) => {
-    const aspect = item.width / item.height;
-    return item.width >= 700 && item.height >= 900 && aspect >= 0.55 && aspect <= 1.05;
-  });
+  await sharp(stack.input).webp({ lossless: true, effort: 6 }).toFile(REVIEW_BEFORE);
 
-  if (!tallCandidates.length) {
-    throw new Error('Nem o card isolado nem o hero vertical contendo o Presente 03 foram localizados. Nenhuma alteração foi feita.');
-  }
+  const replacement = await buildReplacementStrip(stack.input, stack.width, stack.height, approved, approvedMeta);
+  const output = await sharp(stack.input)
+    .composite([{ input: replacement.strip, left: 0, top: replacement.top }])
+    .webp({ lossless: true, effort: 6 })
+    .toBuffer();
 
-  tallCandidates.sort((a, b) => (b.width * b.height) - (a.width * a.height));
-  const stack = tallCandidates[0];
-  const output = await replaceInsideStack(stack.input, stack.width, stack.height, approved);
+  await sharp(output).toFile(REVIEW_FINAL);
+
   html = html.replace(stack.match[0], `data:image/webp;base64,${output.toString('base64')}`);
   fs.writeFileSync(INDEX_PATH, html, 'utf8');
-  console.log(`[INSPIRA] Presente 03 corrigido com a arte aprovada, sem overlays e sem recriar textos. Hero: ${stack.width}x${stack.height}.`);
+
+  console.log(`[INSPIRA] Bloco 03 reconstruído como faixa única e opaca. Hero ${stack.width}x${stack.height}; início y=${replacement.top}; arte escalada=${stack.width}x${replacement.scaledHeight}.`);
+  console.log(`[INSPIRA] Alinhamento: pink hero y=${replacement.heroCard.y}; pink aprovado y=${replacement.approvedCard.y}. Overlay removido=${overlayRemoved}.`);
+  console.log(`[INSPIRA] Revisão visual publicada em /${REVIEW_FINAL}.`);
 }
 
 main().catch((err) => {
-  console.error('[INSPIRA] Falha ao aplicar a arte aprovada do Presente 03:', err);
+  console.error('[INSPIRA] Falha ao corrigir definitivamente o Presente 03:', err);
   process.exit(1);
 });
