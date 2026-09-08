@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "postinstall": "node scripts/fix_inspira_presente03_build.js"
+    "postinstall": "node scripts/fix_inspira_presente03_exact.js"
   },
   "dependencies": {
     "jpeg-js": "^0.4.4",
