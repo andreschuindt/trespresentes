@@ -17,11 +17,14 @@ const CARD_EXPECTED_SHA256 = '99be72ae0fd5a81896e9d9e96fbb43c71b14fedd24689020c7
 
 const HERO_WIDTH = 530;
 const HERO_HEIGHT = 626;
-const BOTTOM_TOP = 402;
-const BOTTOM_HEIGHT = HERO_HEIGHT - BOTTOM_TOP;
+const CLEAN_TOP = 390;
+const CLEAN_HEIGHT = HERO_HEIGHT - CLEAN_TOP;
+const BLEND_HEIGHT = 28;
 const CARD_CANVAS_WIDTH = 460;
 const CARD_LEFT = Math.round((HERO_WIDTH - CARD_CANVAS_WIDTH) / 2);
-const FEATHER = 24;
+const CARD_TOP_ABSOLUTE = 417;
+const CARD_TOP = CARD_TOP_ABSOLUTE - CLEAN_TOP;
+const FEATHER = 18;
 
 function readParts(paths, expectedLength, label) {
   const b64 = paths.map((path) => fs.readFileSync(path, 'utf8').replace(/\s+/g, '')).join('');
@@ -37,21 +40,46 @@ function assertHash(buffer, expected, label) {
   return hash;
 }
 
-async function pixel(input, left, top) {
+async function sampleAverage(input, left, top, width, height) {
   const { data } = await sharp(input)
-    .extract({ left, top, width: 1, height: 1 })
+    .extract({ left, top, width, height })
+    .resize(1, 1, { fit: 'fill' })
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
   return [data[0], data[1], data[2]];
 }
 
-function averageColor(a, b) {
-  return a.map((v, i) => Math.round((v + b[i]) / 2));
+function lerp(a, b, t) {
+  return a + (b - a) * t;
 }
 
-function rgb(c) {
-  return `rgb(${c[0]},${c[1]},${c[2]})`;
+async function buildCleanBackground(hero) {
+  const tl = await sampleAverage(hero, 0, CLEAN_TOP, 25, 15);
+  const tr = await sampleAverage(hero, HERO_WIDTH - 25, CLEAN_TOP, 25, 15);
+  const bl = await sampleAverage(hero, 0, HERO_HEIGHT - 16, 25, 16);
+  const br = await sampleAverage(hero, HERO_WIDTH - 25, HERO_HEIGHT - 16, 25, 16);
+
+  const data = Buffer.alloc(HERO_WIDTH * CLEAN_HEIGHT * 4);
+  for (let y = 0; y < CLEAN_HEIGHT; y++) {
+    const v = CLEAN_HEIGHT <= 1 ? 0 : y / (CLEAN_HEIGHT - 1);
+    const left = [lerp(tl[0], bl[0], v), lerp(tl[1], bl[1], v), lerp(tl[2], bl[2], v)];
+    const right = [lerp(tr[0], br[0], v), lerp(tr[1], br[1], v), lerp(tr[2], br[2], v)];
+    const alpha = y >= BLEND_HEIGHT ? 255 : Math.round(255 * y / BLEND_HEIGHT);
+
+    for (let x = 0; x < HERO_WIDTH; x++) {
+      const u = HERO_WIDTH <= 1 ? 0 : x / (HERO_WIDTH - 1);
+      const idx = (y * HERO_WIDTH + x) * 4;
+      data[idx] = Math.round(lerp(left[0], right[0], u));
+      data[idx + 1] = Math.round(lerp(left[1], right[1], u));
+      data[idx + 2] = Math.round(lerp(left[2], right[2], u));
+      data[idx + 3] = alpha;
+    }
+  }
+
+  return sharp(data, {
+    raw: { width: HERO_WIDTH, height: CLEAN_HEIGHT, channels: 4 }
+  }).png().toBuffer();
 }
 
 async function featherCard(input) {
@@ -79,36 +107,18 @@ async function featherCard(input) {
 }
 
 async function buildApprovedHero(hero, card) {
-  const topLeft = await pixel(hero, 0, BOTTOM_TOP);
-  const topRight = await pixel(hero, HERO_WIDTH - 1, BOTTOM_TOP);
-  const bottomLeft = await pixel(hero, 0, HERO_HEIGHT - 1);
-  const bottomRight = await pixel(hero, HERO_WIDTH - 1, HERO_HEIGHT - 1);
-
-  const topColor = averageColor(topLeft, topRight);
-  const bottomColor = averageColor(bottomLeft, bottomRight);
-
-  const background = Buffer.from(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="${HERO_WIDTH}" height="${BOTTOM_HEIGHT}">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${rgb(topColor)}"/>
-          <stop offset="100%" stop-color="${rgb(bottomColor)}"/>
-        </linearGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#bg)"/>
-    </svg>
-  `);
-
+  const cleanBackground = await buildCleanBackground(hero);
   const approvedCard = await featherCard(card);
-  const cardTop = Math.max(0, Math.round((BOTTOM_HEIGHT - approvedCard.height) / 2));
 
-  const cleanBottom = await sharp(background)
-    .composite([{ input: approvedCard.png, left: CARD_LEFT, top: cardTop }])
-    .png()
-    .toBuffer();
+  if (CARD_TOP < 0 || CARD_TOP + approvedCard.height > CLEAN_HEIGHT) {
+    throw new Error(`Presente 03 fora da área segura: top=${CARD_TOP}, altura=${approvedCard.height}, área=${CLEAN_HEIGHT}.`);
+  }
 
   return sharp(hero)
-    .composite([{ input: cleanBottom, left: 0, top: BOTTOM_TOP }])
+    .composite([
+      { input: cleanBackground, left: 0, top: CLEAN_TOP },
+      { input: approvedCard.png, left: CARD_LEFT, top: CARD_TOP_ABSOLUTE }
+    ])
     .webp({ quality: 95, smartSubsample: true })
     .toBuffer();
 }
@@ -179,10 +189,10 @@ async function main() {
   fs.writeFileSync('hero-approved-final.webp', finalHero);
 
   const finalHash = crypto.createHash('sha256').update(finalHero).digest('hex');
-  console.log(`[INSPIRA] Hero final recomposto em ${HERO_WIDTH}x${HERO_HEIGHT}.`);
-  console.log('[INSPIRA] Presente 03 aplicado uma única vez, alinhado com os blocos 01 e 02, sem sobreposição e sem overlays de texto.');
-  console.log(`[INSPIRA] Presente 03 fonte: ${cardMeta.width}x${cardMeta.height}. Hero anterior: ${chosen.width}x${chosen.height}.`);
-  console.log(`[INSPIRA] SHA-256 do hero final: ${finalHash}.`);
+  console.log(`[INSPIRA] Hero final refinado em ${HERO_WIDTH}x${HERO_HEIGHT}.`);
+  console.log('[INSPIRA] Presente 03 aplicado uma única vez, centralizado, sem sobreposição e com transição de fundo suavizada.');
+  console.log(`[INSPIRA] Presente 03 fonte: ${cardMeta.width}x${cardMeta.height}; canvas ${CARD_CANVAS_WIDTH}px; x=${CARD_LEFT}; y=${CARD_TOP_ABSOLUTE}.`);
+  console.log(`[INSPIRA] Hero anterior no HTML: ${chosen.width}x${chosen.height}. SHA-256 final: ${finalHash}.`);
 }
 
 main().catch((err) => {
