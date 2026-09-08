@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const sharp = require('sharp');
 
 const INDEX_PATH = 'index.html';
+const SITE_URL = 'https://trespresentes.vercel.app/';
+const SITE_DESCRIPTION = 'Receba três presentes do INSPIRA: o e-book Efeito Girassol, a possibilidade de solicitar uma sessão terapêutica gratuita de 40 minutos e um desconto para conhecer a Comunidade INSPIRA.';
 const HERO_PARTS = Array.from({ length: 8 }, (_, i) =>
   `assets/hero-full-approved/part${String(i + 1).padStart(2, '0')}.b64`
 );
@@ -123,6 +125,93 @@ async function buildApprovedHero(hero, card) {
     .toBuffer();
 }
 
+function applySeoFixes(html) {
+  const robots = '<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />';
+  const googlebot = '<meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />';
+
+  if (/<meta\s+name=["']robots["'][^>]*>/i.test(html)) {
+    html = html.replace(/<meta\s+name=["']robots["'][^>]*>/i, robots);
+  } else {
+    html = html.replace(/(<meta\s+name=["']description["'][^>]*>)/i, `$1\n  ${robots}`);
+  }
+
+  if (/<meta\s+name=["']googlebot["'][^>]*>/i.test(html)) {
+    html = html.replace(/<meta\s+name=["']googlebot["'][^>]*>/i, googlebot);
+  } else {
+    html = html.replace(robots, `${robots}\n  ${googlebot}`);
+  }
+
+  if (/<meta\s+name=["']description["'][^>]*>/i.test(html)) {
+    html = html.replace(
+      /<meta\s+name=["']description["'][^>]*>/i,
+      `<meta name="description" content="${SITE_DESCRIPTION}" />`
+    );
+  }
+
+  if (!/<link\s+rel=["']canonical["']/i.test(html)) {
+    html = html.replace(/<\/title>/i, `</title>\n  <link rel="canonical" href="${SITE_URL}" />`);
+  }
+
+  const jsonLd = `  <script type="application/ld+json">\n${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}#website`,
+        url: SITE_URL,
+        name: 'Três Presentes | INSPIRA',
+        inLanguage: 'pt-BR'
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${SITE_URL}#webpage`,
+        url: SITE_URL,
+        name: 'Você ganhou 3 presentes incríveis!',
+        description: SITE_DESCRIPTION,
+        isPartOf: { '@id': `${SITE_URL}#website` },
+        inLanguage: 'pt-BR',
+        primaryImageOfPage: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}og/tres-presentes-1200-v20260831-04.jpg?v=20260831-04`,
+          width: 1200,
+          height: 1200
+        }
+      }
+    ]
+  }, null, 2)}\n  </script>`;
+
+  if (!/<script\s+type=["']application\/ld\+json["']/i.test(html)) {
+    html = html.replace(/<\/head>/i, `${jsonLd}\n</head>`);
+  }
+
+  return html;
+}
+
+function writeSeoFiles() {
+  const robotsTxt = [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    `Sitemap: ${SITE_URL}sitemap.xml`,
+    ''
+  ].join('\n');
+
+  const sitemapXml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    '  <url>',
+    `    <loc>${SITE_URL}</loc>`,
+    '    <changefreq>monthly</changefreq>',
+    '    <priority>1.0</priority>',
+    '  </url>',
+    '</urlset>',
+    ''
+  ].join('\n');
+
+  fs.writeFileSync('robots.txt', robotsTxt, 'utf8');
+  fs.writeFileSync('sitemap.xml', sitemapXml, 'utf8');
+}
+
 async function main() {
   if (!fs.existsSync(INDEX_PATH)) throw new Error(`Arquivo ${INDEX_PATH} não encontrado.`);
 
@@ -185,6 +274,9 @@ async function main() {
   html = html.replace('.hero-presentes-frame{width:min(560px,100%)}', '.hero-presentes-frame{width:min(530px,100%)}');
   html = html.replace('.hero-presentes-frame{width:100%;padding:0}', '.hero-presentes-frame{width:min(530px,100%);padding:0}');
 
+  html = applySeoFixes(html);
+  writeSeoFiles();
+
   fs.writeFileSync(INDEX_PATH, html, 'utf8');
   fs.writeFileSync('hero-approved-final.webp', finalHero);
 
@@ -193,6 +285,9 @@ async function main() {
   console.log('[INSPIRA] Presente 03 aplicado uma única vez, centralizado, sem sobreposição e com transição de fundo suavizada.');
   console.log(`[INSPIRA] Presente 03 fonte: ${cardMeta.width}x${cardMeta.height}; canvas ${CARD_CANVAS_WIDTH}px; x=${CARD_LEFT}; y=${CARD_TOP_ABSOLUTE}.`);
   console.log(`[INSPIRA] Hero anterior no HTML: ${chosen.width}x${chosen.height}. SHA-256 final: ${finalHash}.`);
+  console.log('[SEO] Indexação liberada: robots=index,follow e googlebot=index,follow.');
+  console.log('[SEO] robots.txt e sitemap.xml gerados para produção.');
+  console.log('[SEO] Dados estruturados WebSite/WebPage adicionados ao HTML.');
 }
 
 main().catch((err) => {
