@@ -12,7 +12,7 @@ const EXPECTED_WIDTH = 530;
 const EXPECTED_HEIGHT = 626;
 
 function readApprovedHeroBase64() {
-  const b64 = PARTS.map((path) => fs.readFileSync(path, 'utf8').trim()).join('');
+  const b64 = PARTS.map((path) => fs.readFileSync(path, 'utf8').replace(/\s+/g, '')).join('');
   if (b64.length !== EXPECTED_B64_LENGTH) {
     throw new Error(`Arte integral aprovada incompleta: ${b64.length}/${EXPECTED_B64_LENGTH}.`);
   }
@@ -61,13 +61,12 @@ async function main() {
   });
 
   const hero = candidates[0];
-  const replacement = `data:image/webp;base64,${approvedB64}`;
-  html = html.replace(hero.match[0], replacement);
+  html = html.replace(hero.match[0], `data:image/webp;base64,${approvedB64}`);
   fs.writeFileSync(INDEX_PATH, html, 'utf8');
-
   fs.writeFileSync('hero-approved-final.webp', approved);
-  console.log(`[INSPIRA] Hero completo substituído integralmente pela arte aprovada ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, sem recorte, recomposição ou reprocessamento.`);
-  console.log(`[INSPIRA] Hero anterior identificado em ${hero.width}x${hero.height}; novo SHA-256 ${EXPECTED_SHA256}.`);
+
+  console.log(`[INSPIRA] Hero completo restaurado integralmente com a arte aprovada ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, sem recorte, recomposição ou reprocessamento.`);
+  console.log(`[INSPIRA] Hero anterior: ${hero.width}x${hero.height}. SHA-256 aprovado: ${EXPECTED_SHA256}.`);
 }
 
 main().catch((err) => {
