@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://trespresentes.vercel.app/sitemap.xml
+Sitemap: https://presentesparadocentes.vercel.app/sitemap.xml
