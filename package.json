@@ -1,11 +1,6 @@
 {
-  "name": "trespresentes",
+  "name": "presentesparadocentes",
   "private": true,
   "version": "1.0.0",
-  "scripts": {
-    "postinstall": "node scripts/finalize_presente03_inspira.js && node scripts/finalize_seo.js"
-  },
-  "dependencies": {
-    "sharp": "^0.34.3"
-  }
+  "description": "Landing page Alma Docente para profissionais da educação"
 }
