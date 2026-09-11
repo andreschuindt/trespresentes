@@ -64,7 +64,7 @@ html = html.replace(
 // 4) Remove âncoras placeholder e mantém destinos rastreáveis.
 html = html.replace('<a href="#">Política de Privacidade</a>', '<a href="/privacidade.html">Política de Privacidade</a>');
 html = html.replace('<a href="#">Termos</a>', '<a href="/termos.html">Termos</a>');
-html = html.replace(/href=["']#["'](\s+id=["']insightsPopupCta["'])/i, 'href="https://wa.me/5522981052618"$1');
+html = html.replace(/href=["']#["'](\s+id=["']insightsPopupCta["'])/i, 'href="https://wa.me/5519981370555"$1');
 html = html.replace(/<a([^>]*?)href=["']#["']([^>]*)>/gi, '<a$1href="/#inicio"$2>');
 
 // 5) Mantém somente UM bloco JSON-LD válido, evitando marcação duplicada.
