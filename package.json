@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "postinstall": "node scripts/finalize_presente03_inspira.js && node scripts/finalize_seo.js"
+    "postinstall": "node scripts/finalize_presente03_inspira.js && node scripts/finalize_seo.js && node scripts/update_whatsapp_number.js"
   },
   "dependencies": {
     "sharp": "^0.34.3"
