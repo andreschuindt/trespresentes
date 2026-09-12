@@ -5,6 +5,7 @@ const INDEX_PATH = 'index.html';
 const PARTS_DIR = path.join('assets', 'popup-inspira');
 const OUTPUT_IMAGE = 'inspira-grupo-500.webp';
 const POPUP_TITLE = 'Quer conversar comigo no whatsapp?';
+const GROUP_URL = 'https://chat.whatsapp.com/FbLqdc1jA5q84KBJkODmj0?s=cl&p=a&mlu=4&ilr=4';
 
 if (!fs.existsSync(INDEX_PATH)) {
   throw new Error(`[POPUP INSPIRA] Arquivo ${INDEX_PATH} não encontrado.`);
@@ -65,6 +66,13 @@ html = html.replace(
   `<h2 id="insightsPopupTitle">${POPUP_TITLE}</h2>`
 );
 
+// Corrige todos os destinos de convite do grupo dentro do HTML, preservando o WhatsApp direto do André.
+let groupLinkReplacements = 0;
+html = html.replace(/https:\/\/chat\.whatsapp\.com\/[^"'`\s<]+/g, () => {
+  groupLinkReplacements += 1;
+  return GROUP_URL;
+});
+
 if (!html.includes('object-fit:cover;background:#f7efe9')) {
   throw new Error('[POPUP INSPIRA] O preenchimento integral da imagem não foi aplicado.');
 }
@@ -74,10 +82,18 @@ if (!html.includes('/inspira-grupo-500.webp?v=20260911-03')) {
 if (!html.includes(`<h2 id="insightsPopupTitle">${POPUP_TITLE}</h2>`)) {
   throw new Error('[POPUP INSPIRA] O novo título do popup não foi aplicado.');
 }
+if (groupLinkReplacements < 1 || !html.includes(GROUP_URL)) {
+  throw new Error('[POPUP INSPIRA] O novo link do grupo não foi aplicado.');
+}
+const remainingGroupLinks = html.match(/https:\/\/chat\.whatsapp\.com\/[^"'`\s<]+/g) || [];
+if (remainingGroupLinks.some((url) => url !== GROUP_URL)) {
+  throw new Error('[POPUP INSPIRA] Ainda existe link antigo de grupo no HTML.');
+}
 
 fs.writeFileSync(INDEX_PATH, html, 'utf8');
 
 console.log(`[POPUP INSPIRA] Arte quadrada reconstruída: ${image.length} bytes.`);
 console.log('[POPUP INSPIRA] Imagem configurada para preencher integralmente o quadrante do popup.');
 console.log(`[POPUP INSPIRA] Título atualizado para: ${POPUP_TITLE}`);
+console.log(`[POPUP INSPIRA] Link do grupo atualizado em ${groupLinkReplacements} ocorrência(s): ${GROUP_URL}`);
 console.log('[POPUP INSPIRA] Demais conteúdos do popup foram preservados.');
