@@ -4,6 +4,7 @@ const path = require('path');
 const INDEX_PATH = 'index.html';
 const PARTS_DIR = path.join('assets', 'popup-inspira');
 const OUTPUT_IMAGE = 'inspira-grupo-500.webp';
+const POPUP_TITLE = 'Quer conversar comigo no whatsapp?';
 
 if (!fs.existsSync(INDEX_PATH)) {
   throw new Error(`[POPUP INSPIRA] Arquivo ${INDEX_PATH} não encontrado.`);
@@ -58,15 +59,25 @@ html = html.replace(
   'alt="Roda de conversa acolhedora da Comunidade INSPIRA, representando escuta, cuidado e pertencimento."'
 );
 
+// Atualiza somente o título principal solicitado para a janela popup.
+html = html.replace(
+  /<h2 id="insightsPopupTitle">[\s\S]*?<\/h2>/i,
+  `<h2 id="insightsPopupTitle">${POPUP_TITLE}</h2>`
+);
+
 if (!html.includes('object-fit:cover;background:#f7efe9')) {
   throw new Error('[POPUP INSPIRA] O preenchimento integral da imagem não foi aplicado.');
 }
 if (!html.includes('/inspira-grupo-500.webp?v=20260911-03')) {
   throw new Error('[POPUP INSPIRA] A nova versão da imagem não foi referenciada no popup.');
 }
+if (!html.includes(`<h2 id="insightsPopupTitle">${POPUP_TITLE}</h2>`)) {
+  throw new Error('[POPUP INSPIRA] O novo título do popup não foi aplicado.');
+}
 
 fs.writeFileSync(INDEX_PATH, html, 'utf8');
 
 console.log(`[POPUP INSPIRA] Arte quadrada reconstruída: ${image.length} bytes.`);
 console.log('[POPUP INSPIRA] Imagem configurada para preencher integralmente o quadrante do popup.');
-console.log('[POPUP INSPIRA] Nenhum outro conteúdo do popup foi alterado.');
+console.log(`[POPUP INSPIRA] Título atualizado para: ${POPUP_TITLE}`);
+console.log('[POPUP INSPIRA] Demais conteúdos do popup foram preservados.');
