@@ -1,6 +1,6 @@
 @import url("https://cdn.jsdelivr.net/gh/andreschuindt/trespresentes@df9ca5a3480cca818068e4e024ecbb7bd407d78b/site/styles.css");
 
-/* Hero final v32 — imagem correta, proporção 4:3 e visibilidade garantida */
+/* Hero final v41 — imagem correta, proporção nativa 3:2 e visibilidade garantida */
 @media (min-width:901px){
   .heroGrid{grid-template-columns:1fr 1fr;gap:38px}
 }
@@ -9,7 +9,7 @@
   width:100%!important;
   max-width:760px!important;
   padding:0!important;
-  aspect-ratio:4/3!important;
+  aspect-ratio:3/2!important;
   overflow:hidden!important;
   background:#f5efe4!important;
   border-radius:34px!important;
@@ -23,8 +23,8 @@
   display:block!important;
   width:100%!important;
   height:100%!important;
-  aspect-ratio:4/3!important;
-  object-fit:contain!important;
+  aspect-ratio:3/2!important;
+  object-fit:cover!important;
   opacity:1!important;
   visibility:visible!important;
   position:static!important;
@@ -34,8 +34,8 @@
   background:#f5efe4!important;
 }
 @media (max-width:620px){
-  .hero-art-frame{max-width:100%!important;border-radius:26px!important;aspect-ratio:4/3!important}
-  .hero-art-frame .hero-community-image,.hero-illustration img{border-radius:20px!important;aspect-ratio:4/3!important}
+  .hero-art-frame{max-width:100%!important;border-radius:26px!important;aspect-ratio:3/2!important}
+  .hero-art-frame .hero-community-image,.hero-illustration img{border-radius:20px!important;aspect-ratio:3/2!important}
   .foot{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
   .foot b,.foot span{display:block;width:100%;margin:0}
   .foot span{margin-top:2px;line-height:1.45}
