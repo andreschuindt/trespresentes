@@ -1,24 +1,29 @@
 @import url("https://cdn.jsdelivr.net/gh/andreschuindt/trespresentes@df9ca5a3480cca818068e4e024ecbb7bd407d78b/site/styles.css");
 
-/* Hero HQ v27 — imagem aprovada, maior e nítida */
+/* Hero HQ v31 — correção definitiva de visibilidade e carregamento local */
 @media (min-width:901px){
   .heroGrid{grid-template-columns:1fr 1fr;gap:38px}
 }
 .hero-art-frame{
-  max-width:720px;
+  max-width:760px;
   padding:0;
-  aspect-ratio:4/3;
+  aspect-ratio:3/2;
   overflow:hidden;
-  background:#f5efe4 url("https://cdn.jsdelivr.net/gh/andreschuindt/trespresentes@1c9214d527870bae92a9cbef85e6251e8629c3b0/site/hero-community-v27.webp") center/cover no-repeat;
+  background:#f5efe4;
 }
 .hero-illustration img{
+  display:block;
   width:100%;
   height:100%;
-  aspect-ratio:4/3;
+  aspect-ratio:3/2;
   object-fit:cover;
-  opacity:0;
+  opacity:1!important;
+  visibility:visible!important;
 }
 @media (max-width:620px){
-  .hero-art-frame{padding:0;border-radius:26px}
-  .hero-illustration img{aspect-ratio:4/3}
+  .hero-art-frame{padding:0;border-radius:26px;aspect-ratio:3/2}
+  .hero-illustration img{aspect-ratio:3/2;border-radius:20px;opacity:1!important;visibility:visible!important}
+  .foot{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+  .foot b,.foot span{display:block;width:100%;margin:0}
+  .foot span{margin-top:2px;line-height:1.45}
 }
