@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prévia v1.3 — Três Presentes</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    :root {
+      --bg:#2b1235;
+      --bg2:#4f2151;
+      --paper:#fcfaf8;
+      --panel:#fffdfb;
+      --ink:#36223b;
+      --muted:#6b5a73;
+      --line:#ddd3df;
+      --gold:#efb92d;
+      --soft-gold:#f8e6b8;
+      --lav:#f3edfe;
+      --rose:#ffd5cf;
+      --accent:#5d2e69;
+      --shadow:0 24px 70px rgba(28,11,36,.18);
+      --radius:28px;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; color:var(--ink); font-family:Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,.07), transparent 25%),
+        radial-gradient(circle at bottom right, rgba(255,255,255,.05), transparent 18%),
+        linear-gradient(180deg, var(--bg2), var(--bg));
+    }
+    .page { max-width:1180px; margin:0 auto; padding:24px 18px 70px; }
+    .tag {
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px;
+      color:#fff; background:rgba(255,255,255,.12); font-size:12px; text-transform:uppercase; letter-spacing:.08em;
+      backdrop-filter: blur(10px);
+    }
+    .hero {
+      margin-top:18px; background:linear-gradient(180deg, rgba(255,252,248,.98), rgba(255,248,243,.97));
+      border-radius:40px; overflow:hidden; box-shadow:var(--shadow);
+    }
+    .hero-grid { display:grid; grid-template-columns:1.02fr .98fr; }
+    .copy { padding:56px 54px 24px; }
+    .eyebrow { display:inline-block; padding:9px 13px; background:#f8ecbf; color:#72530d; border-radius:999px; font-size:12px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
+    h1,h2,h3 { font-family:Georgia, 'Times New Roman', serif; line-height:.95; letter-spacing:-.02em; margin:0; }
+    h1 { font-size:clamp(46px,7vw,82px); margin-top:16px; }
+    .lead { margin:20px 0 0; font-size:20px; line-height:1.65; color:#5d4d64; max-width:60ch; }
+    .cta-row { display:flex; flex-wrap:wrap; gap:14px; margin-top:28px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:54px; padding:0 24px; border-radius:999px; text-decoration:none; border:none; cursor:pointer; font-weight:700; font-size:16px; }
+    .btn-primary { background:#5d2e69; color:#fff; box-shadow:0 14px 30px rgba(93,46,105,.22); }
+    .btn-secondary { background:#efe9f3; color:#54285f; }
+    .visual { padding:28px; background:radial-gradient(circle at top left, rgba(255,255,255,.28), transparent 28%), linear-gradient(160deg,#3f1e51 0%, #24112c 100%); display:flex; align-items:center; justify-content:center; }
+    .visual-card { width:min(100%, 500px); border-radius:30px; overflow:hidden; border:1px solid rgba(255,255,255,.12); box-shadow:0 24px 65px rgba(0,0,0,.25); }
+    .visual-card img { display:block; width:100%; height:auto; }
+    .summary { padding:0 54px 42px; }
+    .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:18px; }
+    .sum-card { background:#fff; border:1px solid #ede3ef; border-radius:24px; padding:20px; box-shadow:0 10px 22px rgba(33,12,42,.05); }
+    .sum-card:nth-child(1) { background:#fff4bf; }
+    .sum-card:nth-child(2) { background:#efe8ff; }
+    .sum-card:nth-child(3) { background:#ffd8d2; }
+    .sum-top { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.75; }
+    .sum-card h3 { font-size:30px; margin-top:10px; }
+    .sum-card p { margin:10px 0 0; line-height:1.55; color:#4e4153; }
+
+    .section { margin-top:28px; background:var(--paper); border-radius:34px; padding:34px; box-shadow:var(--shadow); }
+    .section-head { display:flex; justify-content:space-between; gap:22px; align-items:end; margin-bottom:22px; }
+    .section-head p { margin:0; max-width:62ch; color:var(--muted); line-height:1.65; }
+    .form-grid { display:grid; grid-template-columns:1.08fr .92fr; gap:24px; align-items:start; }
+    .form-panel, .info-panel { background:#fff; border:1px solid #eadfea; border-radius:30px; padding:28px; }
+    .mini-kicker { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#806013; margin-bottom:10px; }
+    .form-panel h2, .info-panel h2 { font-size:48px; }
+    .subcopy { margin:16px 0 0; color:#685b70; font-size:16px; line-height:1.65; }
+    .official-note { margin-top:14px; padding:14px 16px; background:#fff5de; border:1px solid #edd8a3; border-radius:18px; color:#5d5129; font-size:14px; line-height:1.6; }
+    form { margin-top:24px; display:grid; gap:18px; }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    label { display:grid; gap:8px; color:#403247; font-size:13px; font-weight:700; }
+    .optional { font-weight:400; color:#8c7d90; }
+    input[type=text], input[type=email], input[type=tel], select, textarea {
+      width:100%; border-radius:16px; border:1px solid #dccfdf; background:#fff; color:#26192d; padding:0 16px; font-size:16px;
+      outline:none; transition:border-color .18s ease, box-shadow .18s ease; font-family:Arial, Helvetica, sans-serif;
+    }
+    input[type=text], input[type=email], input[type=tel], select { min-height:52px; }
+    textarea { min-height:98px; padding-top:14px; padding-bottom:14px; resize:vertical; }
+    input:focus, select:focus, textarea:focus { border-color:#cfb260; box-shadow:0 0 0 4px rgba(239,185,45,.12); }
+    .consent { display:flex; align-items:flex-start; gap:12px; font-size:14px; line-height:1.55; color:#5f5266; padding:14px 16px; border:1px solid #ebe1cc; border-radius:18px; background:#fcf7ea; }
+    .consent input { margin-top:3px; }
+    .submit-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    .submit-row small { color:#7c6f80; }
+    .preview-success { display:none; margin-top:12px; padding:15px 16px; border-radius:18px; background:#edf8ef; border:1px solid #cde3d1; color:#1d4b2a; line-height:1.6; }
+    .info-list { display:grid; gap:14px; margin-top:18px; }
+    .info-item { background:#fff; border:1px solid #ede2ef; border-radius:20px; padding:16px 18px; }
+    .insert { margin-top:18px; border-radius:24px; overflow:hidden; border:1px solid #eadfea; }
+    .insert img { display:block; width:100%; height:auto; }
+    .why-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:18px; }
+    .why-card { background:#fff; border:1px solid #ede2ef; border-radius:22px; padding:20px; }
+    .why-card h3 { font-size:31px; margin-bottom:8px; }
+    .why-card p { margin:0; color:#64586c; line-height:1.6; }
+    .authority-grid { display:grid; grid-template-columns:.8fr 1.2fr; gap:24px; align-items:stretch; }
+    .portrait { min-height:320px; border-radius:28px; background:linear-gradient(180deg,#f5ecf8,#f3eef2); border:1px dashed #d7c5db; padding:28px; display:flex; flex-direction:column; justify-content:end; }
+    .portrait span { width:max-content; background:#fff; color:#5d2e69; border-radius:999px; padding:8px 12px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+    .portrait strong { font-size:30px; font-family:Georgia, serif; margin-top:14px; }
+    .disclaimer { margin-top:18px; background:#fff4dd; border:1px solid #eed7a2; border-radius:20px; padding:16px 18px; color:#5f4f24; line-height:1.6; }
+    footer { text-align:center; color:rgba(255,255,255,.82); font-size:14px; line-height:1.6; padding:34px 10px 6px; }
+
+    @media (max-width: 980px) {
+      .hero-grid, .form-grid, .authority-grid { grid-template-columns:1fr; }
+      .summary-grid, .why-grid { grid-template-columns:1fr; }
+      .copy, .summary { padding-left:24px; padding-right:24px; }
+      .section { padding:24px 16px; border-radius:26px; }
+      .form-panel h2, .info-panel h2 { font-size:38px; }
+    }
+    @media (max-width: 640px) {
+      .page { padding:16px 12px 46px; }
+      .copy { padding-top:34px; }
+      h1 { font-size:50px; }
+      .lead { font-size:18px; }
+      .field-grid { grid-template-columns:1fr; }
+      .btn { width:100%; }
+      .summary { padding-bottom:28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="tag">Prévia v1.3 · visualização não publicada</div>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="copy">
+          <span class="eyebrow">Projeto INSPIRA · Três Presentes</span>
+          <h1>Você ganhou três presentes.</h1>
+          <p class="lead">Refiz esta apresentação com a arte que você aprovou e preservei os <strong>campos oficiais do formulário</strong> para manter compatibilidade com a planilha do Google Sheet Três Presentes.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#formulario-oficial">Ver formulário oficial</a>
+            <a class="btn btn-secondary" href="#estrutura">Entender a estrutura</a>
+          </div>
+        </div>
+        <div class="visu
